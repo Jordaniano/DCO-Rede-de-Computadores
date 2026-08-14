@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Redes I - UFRN</title>
+    <style>
+        /* Estilos focados em celular (Mobile-First) */
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f0f2f5; margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .app-container { background: white; max-width: 600px; width: 100%; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
+        .score { font-size: 28px; font-weight: 800; color: #0d6efd; text-align: center; margin-bottom: 15px; }
+        .question { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 20px; line-height: 1.4; }
+        
+        .option-label { display: flex; align-items: flex-start; padding: 12px; margin-bottom: 10px; background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .option-label:hover { background-color: #e2e6ea; }
+        .option-label input[type="checkbox"] { width: 22px; height: 22px; margin-right: 12px; margin-top: 2px; cursor: pointer; }
+        .option-text { font-size: 16px; color: #495057; }
+        
+        .btn { width: 100%; padding: 16px; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; transition: 0.2s; color: white;}
+        .btn-confirm { background-color: #0d6efd; }
+        .btn-confirm:hover { background-color: #0b5ed7; }
+        .btn-next { background-color: #198754; display: none; }
+        .btn-next:hover { background-color: #157347; }
+        
+        .feedback { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .feedback-box { padding: 15px; border-radius: 8px; font-size: 15px; line-height: 1.5; }
+        .fb-perfect { background-color: #d1e7dd; color: #0f5132; font-weight: bold; font-size: 18px; text-align: center; }
+        .fb-warning-title { background-color: #f8d7da; color: #842029; font-weight: bold; font-size: 18px; text-align: center; }
+        .fb-correct { background-color: #d1e7dd; border-left: 5px solid #198754; color: #0f5132; }
+        .fb-error { background-color: #f8d7da; border-left: 5px solid #dc3545; color: #842029; }
+        .fb-missed { background-color: #fff3cd; border-left: 5px solid #ffc107; color: #664d03; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="score" id="score">00/80</div>
+        <div class="question" id="question">Carregando questões...</div>
+        
+        <div id="options-container"></div>
+        
+        <button class="btn btn-confirm" id="btn-confirm" onclick="verificarResposta()">Confirmar Resposta ✔️</button>
+        
+        <div class="feedback" id="feedback-container"></div>
+        
+        <button class="btn btn-next" id="btn-next" onclick="carregarProximaQuestao()">Continuar ➡️</button>
+    </div>
+
+    <script>
+        let questoesOriginais = [];
+        let questoesPendentes = [];
+        let questaoAtual = null;
+        let pontuacao = 0;
+        let totalQuestoes = 0;
+
+        // 1. Carrega o arquivo JSON local
+        async function iniciarApp() {
+            try {
+                // Certifique-se de que o nome do arquivo JSON está correto aqui
+                const resposta = await fetch('questoes.json');
+                questoesOriginais = await resposta.json();
+                totalQuestoes = questoesOriginais.length;
+                
+                // Embaralha a lista inicial
+                questoesPendentes = [...questoesOriginais].sort(() => Math.random() - 0.5);
+                carregarProximaQuestao();
+            } catch (erro) {
+                document.getElementById('question').innerText = "Erro ao carregar o JSON. Verifique se o arquivo 'questoes.json' está na mesma pasta e se você iniciou o servidor local.";
+            }
+        }
+
+        // 2. Renderiza a questão na tela
+        function carregarProximaQuestao() {
+            document.getElementById('feedback-container').innerHTML = '';
+            document.getElementById('btn-confirm').style.display = 'block';
+            document.getElementById('btn-next').style.display = 'none';
+
+            if (questoesPendentes.length > 0) {
+                questaoAtual = questoesPendentes.shift();
+                
+                // Formata o placar
+                let ptFormatada = pontuacao.toString().padStart(2, '0');
+                let totalFormatado = totalQuestoes.toString().padStart(2, '0');
+                document.getElementById('score').innerText = `${ptFormatada}/${totalFormatado}`;
+                
+                document.getElementById('question').innerText = questaoAtual.pergunta;
+                
+                let containerOpcoes = document.getElementById('options-container');
+                containerOpcoes.innerHTML = '';
+                
+                // Embaralha as alternativas
+                let opcoesEmbaralhadas = [...questaoAtual.opcoes].sort(() => Math.random() - 0.5);
+                
+                opcoesEmbaralhadas.forEach(opcao => {
+                    let label = document.createElement('label');
+                    label.className = 'option-label';
+                    
+                    let checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = opcao;
+                    
+                    let span = document.createElement('span');
+                    span.className = 'option-text';
+                    span.innerText = opcao;
+                    
+                    label.appendChild(checkbox);
+                    label.appendChild(span);
+                    containerOpcoes.appendChild(label);
+                });
+            } else {
+                // Fim do Jogo
+                document.getElementById('score').innerText = `${totalQuestoes.toString().padStart(2, '0')}/${totalQuestoes.toString().padStart(2, '0')}`;
+                document.getElementById('question').innerText = "🎉 Sensacional! Você dominou todo o conteúdo para a prova!";
+                document.getElementById('options-container').innerHTML = '';
+                document.getElementById('btn-confirm').style.display = 'none';
+            }
+        }
+
+        // 3. Verifica o que o usuário marcou
+        function verificarResposta() {
+            let checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            let marcadas = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            
+            if (marcadas.length === 0) {
+                alert("⚠️ Marque pelo menos uma opção antes de confirmar!");
+                return;
+            }
+
+            // Bloqueia a tela
+            document.getElementById('btn-confirm').style.display = 'none';
+            checkboxes.forEach(cb => cb.disabled = true);
+
+            let certas = questaoAtual.respostas_certas;
+            let explicacoes = questaoAtual.explicacoes || {};
+            
+            let feedbackHTML = '';
+            let teveErro = false;
+            let teveFalta = false;
+
+            // Avalia TODAS as opções da questão (marcadas e não marcadas)
+            questaoAtual.opcoes.forEach(op => {
+                let marcou = marcadas.includes(op);
+                let eraCerta = certas.includes(op);
+                let exp = explicacoes[op] || "Sem explicação cadastrada para este item.";
+
+                if (marcou && eraCerta) {
+                    feedbackHTML += `<div class="feedback-box fb-correct">✅ <strong>Acertou:</strong> ${op}<br>👉 ${exp}</div>`;
+                } else if (marcou && !eraCerta) {
+                    teveErro = true;
+                    feedbackHTML += `<div class="feedback-box fb-error">❌ <strong>Errou ao marcar:</strong> ${op}<br>👉 ${exp}</div>`;
+                } else if (!marcou && eraCerta) {
+                    teveFalta = true;
+                    feedbackHTML += `<div class="feedback-box fb-missed">⚠️ <strong>Esqueceu de marcar:</strong> ${op}<br>👉 ${exp}</div>`;
+                }
+            });
+
+            // Lógica de Repetição Espaçada e Pontuação
+            let cabecalhoFeedback = '';
+            if (!teveErro && !teveFalta) {
+                pontuacao++;
+                cabecalhoFeedback = `<div class="feedback-box fb-perfect">🎉 Perfeito! Você acertou tudo!</div>`;
+            } else {
+                cabecalhoFeedback = `<div class="feedback-box fb-warning-title">📝 Você cometeu alguns deslizes:</div>`;
+                // Joga a questão de volta no array em uma posição aleatória
+                let posicaoAleatoria = Math.floor(Math.random() * (questoesPendentes.length + 1));
+                questoesPendentes.splice(posicaoAleatoria, 0, questaoAtual);
+            }
+
+            document.getElementById('feedback-container').innerHTML = cabecalhoFeedback + feedbackHTML;
+            document.getElementById('btn-next').style.display = 'block';
+        }
+
+        // Dá o pontapé inicial no app
+        iniciarApp();
+    </script>
+
+</body>
+</html>
