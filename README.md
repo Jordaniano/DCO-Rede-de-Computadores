@@ -1,15 +1,15 @@
-DCO3002-Rede-de-Computadores
+#DCO3002-Rede-de-Computadores
 Um web app interativo focado em quizzes para treinar e fixar os conteúdos da disciplina de Redes de Computadores.
 
-💡 Sobre o Projeto
+#💡 Sobre o Projeto
 Este projeto foi desenvolvido como uma ferramenta de estudo prática para treinar para a disciplina de Redes de Computadores. A aplicação utiliza um arquivo JSON como base de dados para armazenar as questões, processadas via Python e exibidas em uma interface web, tornando a revisão dos tópicos da disciplina muito mais dinâmica e eficiente.
 
-🚀 Como Acessar
+#🚀 Como Acessar
 Você pode utilizar a aplicação de duas formas:
 
-1. Acesso Online
+#1. Acesso Online
 A versão mais recente está disponível e hospedada no Netlify:
-👉 dcoredesunidade1.netlify.app
+#👉 dcoredesunidade1.netlify.app
 
 2. Execução Local
 Se preferir rodar o projeto na sua própria máquina, siga estes passos:
